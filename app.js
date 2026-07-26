@@ -270,8 +270,12 @@ async function vote(id) {
 
 /* ---------- Delete ---------- */
 async function deleteMovie(id, title) {
-  const sure = confirm(`Remove "${title}" from the list? This can't be undone.`);
-  if (!sure) return;
+  const entered = prompt(`Only Cameron and Amy can remove films from the list. Type in the password to show that you are them.`);
+  if (entered === null) return;
+  if (entered.trim().toLowerCase() !== "sherry") {
+    alert("Wrong password — nothing removed.");
+    return;
+  }
   try {
     await moviesRef.doc(id).delete();
     forgetVote(id);
@@ -358,7 +362,7 @@ function render() {
           <button class="btn ${movie.watched ? "btn--ghost" : "btn--red"}" data-watch-toggle="${movie.id}" data-next="${!movie.watched}">
             ${movie.watched ? "Mark unwatched" : "We watched this"}
           </button>
-          ${movie.watched ? "" : `<button class="btn btn--ghost" data-delete="${movie.id}" data-title="${escapeHtml(movie.title)}">Remove</button>`}
+          ${movie.watched ? "" : `<button class="btn btn--ghost" data-delete="${movie.id}" data-title="${escapeHtml(movie.title)}">Remove film from list</button>`}
         </div>
         ${movie.watched ? renderReviewSection(movie) : ""}
       </div>
