@@ -1,3 +1,9 @@
+/* ---------- Apply editable copy from content.js ---------- */
+document.title = CONTENT.pageTitle;
+document.getElementById("marqueeTitle").textContent = CONTENT.heading;
+document.getElementById("marqueeSub").textContent = CONTENT.tagline;
+document.getElementById("footerText").textContent = CONTENT.footer;
+
 /* ---------- Firebase init ---------- */
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();

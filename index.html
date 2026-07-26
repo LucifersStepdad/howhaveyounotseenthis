@@ -15,8 +15,8 @@
   <header class="marquee">
     <div class="marquee__bulbs" aria-hidden="true"></div>
     <div class="marquee__inner">
-      <h1 class="marquee__title">HOW HAVE YOU NOT SEEN THIS?!</h1>
-      <p class="marquee__sub">Imagine living and breathing in this beautiful world and someone says "You talking to me?" to you and you just stare blankly at them.</p>
+      <h1 class="marquee__title" id="marqueeTitle"></h1>
+      <p class="marquee__sub" id="marqueeSub"></p>
     </div>
     <div class="marquee__bulbs" aria-hidden="true"></div>
   </header>
@@ -88,7 +88,7 @@
   </main>
 
   <footer class="footer">
-    <p>Every vote and review is visible to anyone with this link.</p>
+    <p id="footerText"></p>
   </footer>
 
   <!-- Firebase (compat build, no bundler needed) -->
@@ -96,6 +96,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="tmdb-config.js"></script>
+  <script src="content.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
