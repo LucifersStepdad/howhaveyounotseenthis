@@ -15,16 +15,19 @@ service cloud.firestore {
                     && request.resource.data.votes == 0
                     && request.resource.data.watched == false;
 
-      // Anyone can update a movie, but only these fields, and only
-      // votes may go up by exactly 1 at a time — no jumping the count.
+      // Anyone can update a movie, but only these fields, and votes may
+      // only move by exactly 1 at a time in either direction — no jumping
+      // the count up or setting it negative.
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
                       .hasOnly(['votes', 'watched', 'watchedAt', 'review', 'reviewedBy'])
                     && (
                          request.resource.data.votes == resource.data.votes
                          || request.resource.data.votes == resource.data.votes + 1
+                         || (request.resource.data.votes == resource.data.votes - 1 && resource.data.votes > 0)
                        );
 
-      allow delete: if false;
+      // Anyone can remove a movie from the list.
+      allow delete: if true;
     }
   }
 }

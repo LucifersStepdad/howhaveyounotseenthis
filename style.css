@@ -384,7 +384,22 @@ body {
   line-height: 1;
 }
 .vote-btn:hover { background: rgba(227,178,60,0.12); }
-.vote-btn:disabled { opacity: 0.4; cursor: default; }
+
+.vote-btn--active {
+  background: var(--gold);
+  color: #211705;
+  border-color: var(--gold);
+}
+.vote-btn--active:hover { background: var(--gold-dim); }
+
+.add-hint--new { color: var(--gold); }
+.add-hint--dupe { color: #8fb3d9; }
+
+@keyframes ticket-flash {
+  0%, 100% { box-shadow: none; }
+  30% { box-shadow: 0 0 0 2px var(--gold), 0 0 20px rgba(227,178,60,0.35); }
+}
+.ticket--flash { animation: ticket-flash 1.5s ease; }
 
 .vote-count {
   font-family: var(--font-mono);

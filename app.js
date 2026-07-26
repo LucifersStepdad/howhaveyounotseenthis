@@ -19,6 +19,11 @@ function rememberVote(id) {
   s.add(id);
   localStorage.setItem(VOTED_KEY, JSON.stringify([...s]));
 }
+function forgetVote(id) {
+  const s = getVotedIds();
+  s.delete(id);
+  localStorage.setItem(VOTED_KEY, JSON.stringify([...s]));
+}
 
 /* ---------- DOM refs ---------- */
 const grid = document.getElementById("grid");
@@ -162,10 +167,19 @@ addForm.addEventListener("submit", async (e) => {
 
   const dupe = tmdbId ? findExistingByTmdbId(tmdbId) : findExistingByTitle(title);
   if (dupe) {
-    addHint.textContent = `"${dupe.title}" is already on the list — go vote for it instead!`;
+    addHint.className = "add-hint add-hint--dupe";
+    if (!getVotedIds().has(dupe.id)) {
+      await vote(dupe.id);
+      addHint.textContent = `"${dupe.title}" was already on the list — added your vote instead.`;
+    } else {
+      addHint.textContent = `"${dupe.title}" is already on the list and you've already voted for it.`;
+    }
+    flashCard(dupe.id);
+    setTimeout(() => { addHint.textContent = ""; addHint.className = "add-hint"; }, 3500);
     return;
   }
 
+  addHint.className = "add-hint";
   addHint.textContent = "Printing ticket...";
   try {
     await moviesRef.add({
@@ -184,13 +198,25 @@ addForm.addEventListener("submit", async (e) => {
     addTmdbId.value = "";
     addPoster.value = "";
     titleResults.hidden = true;
-    addHint.textContent = `"${title}" is on the list.`;
-    setTimeout(() => (addHint.textContent = ""), 2500);
+    addHint.className = "add-hint add-hint--new";
+    addHint.textContent = `New! "${title}" was just added to the list.`;
+    setTimeout(() => { addHint.textContent = ""; addHint.className = "add-hint"; }, 2500);
   } catch (err) {
+    addHint.className = "add-hint";
     addHint.textContent = "Couldn't add that one — try again.";
     console.error(err);
   }
 });
+
+function flashCard(id) {
+  setTimeout(() => {
+    const card = grid.querySelector(`[data-card-id="${id}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.add("ticket--flash");
+    setTimeout(() => card.classList.remove("ticket--flash"), 1500);
+  }, 50);
+}
 
 /* ---------- Tabs ---------- */
 document.querySelectorAll(".tab").forEach((btn) => {
@@ -215,16 +241,30 @@ sortSelect.addEventListener("change", () => {
 /* ---------- Voting ---------- */
 async function vote(id) {
   const voted = getVotedIds();
-  if (voted.has(id)) return;
-  rememberVote(id);
+  const alreadyVoted = voted.has(id);
+
   try {
     await moviesRef.doc(id).update({
-      votes: firebase.firestore.FieldValue.increment(1)
+      votes: firebase.firestore.FieldValue.increment(alreadyVoted ? -1 : 1)
     });
+    if (alreadyVoted) forgetVote(id); else rememberVote(id);
   } catch (err) {
     console.error(err);
   }
   render();
+}
+
+/* ---------- Delete ---------- */
+async function deleteMovie(id, title) {
+  const sure = confirm(`Remove "${title}" from the list? This can't be undone.`);
+  if (!sure) return;
+  try {
+    await moviesRef.doc(id).delete();
+    forgetVote(id);
+  } catch (err) {
+    console.error(err);
+    alert("Couldn't remove that one — try again.");
+  }
 }
 
 /* ---------- Watched toggle ---------- */
@@ -276,12 +316,13 @@ function render() {
     card.className = "ticket" + (movie.watched ? " is-watched" : "");
 
     const alreadyVoted = votedIds.has(movie.id);
+    card.dataset.cardId = movie.id;
 
     card.innerHTML = `
       <div class="ticket__stub">
-        <button class="vote-btn" data-id="${movie.id}" ${alreadyVoted ? "disabled" : ""} aria-label="Vote for ${escapeHtml(movie.title)}">▲</button>
+        <button class="vote-btn ${alreadyVoted ? "vote-btn--active" : ""}" data-id="${movie.id}" aria-label="${alreadyVoted ? "Remove your vote for" : "Vote for"} ${escapeHtml(movie.title)}" title="${alreadyVoted ? "Click to remove your vote" : "Click to vote"}">▲</button>
         <span class="vote-count">${movie.votes || 0}</span>
-        <span class="vote-label">votes</span>
+        <span class="vote-label">${alreadyVoted ? "voted" : "votes"}</span>
       </div>
       <div class="ticket__body">
         ${movie.watched ? `<span class="watched-badge">Watched</span>` : ""}
@@ -296,6 +337,7 @@ function render() {
           <button class="btn ${movie.watched ? "btn--ghost" : "btn--red"}" data-watch-toggle="${movie.id}" data-next="${!movie.watched}">
             ${movie.watched ? "Mark unwatched" : "We watched this"}
           </button>
+          <button class="btn btn--ghost" data-delete="${movie.id}" data-title="${escapeHtml(movie.title)}">Remove</button>
         </div>
         ${movie.watched ? renderReviewSection(movie) : ""}
       </div>
@@ -305,6 +347,10 @@ function render() {
 
   grid.querySelectorAll(".vote-btn").forEach((btn) => {
     btn.addEventListener("click", () => vote(btn.dataset.id));
+  });
+
+  grid.querySelectorAll("[data-delete]").forEach((btn) => {
+    btn.addEventListener("click", () => deleteMovie(btn.dataset.delete, btn.dataset.title));
   });
 
   grid.querySelectorAll("[data-watch-toggle]").forEach((btn) => {
