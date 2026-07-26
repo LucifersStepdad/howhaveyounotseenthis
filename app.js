@@ -270,7 +270,7 @@ async function vote(id) {
 
 /* ---------- Delete ---------- */
 async function deleteMovie(id, title) {
-  const entered = prompt(`Only Cameron and Amy can remove films from the list. Type in the password to show that you are them.`);
+  const entered = prompt(`Is your surname Sherry?\n\nAre you REALLY trying to remove this film from the list?.`);
   if (entered === null) return;
   if (entered.trim().toLowerCase() !== "sherry") {
     alert("Wrong password — nothing removed.");
@@ -287,10 +287,26 @@ async function deleteMovie(id, title) {
 
 /* ---------- Watched toggle ---------- */
 async function toggleWatched(id, nextState) {
+  // Only require the password when marking a film as watched.
+  if (nextState) {
+    const entered = prompt(
+      "Is your surname Sherry?\n\nDid AMY actually watch it?!"
+    );
+
+    if (entered === null) return;
+
+    if (entered.trim().toLowerCase() !== "sherry") {
+      alert("Wrong password — nothing changed.");
+      return;
+    }
+  }
+
   try {
     await moviesRef.doc(id).update({
       watched: nextState,
-      watchedAt: nextState ? firebase.firestore.FieldValue.serverTimestamp() : null
+      watchedAt: nextState
+        ? firebase.firestore.FieldValue.serverTimestamp()
+        : null
     });
   } catch (err) {
     console.error(err);
@@ -360,7 +376,7 @@ function render() {
         </div>
         <div class="ticket__actions">
           <button class="btn ${movie.watched ? "btn--ghost" : "btn--red"}" data-watch-toggle="${movie.id}" data-next="${!movie.watched}">
-            ${movie.watched ? "Mark unwatched" : "We watched this"}
+            ${movie.watched ? "Mark unwatched" : "Amy has watched this"}
           </button>
           ${movie.watched ? "" : `<button class="btn btn--ghost" data-delete="${movie.id}" data-title="${escapeHtml(movie.title)}">Remove film from list</button>`}
         </div>
