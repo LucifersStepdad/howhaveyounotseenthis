@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Backfill posters — First Watch</title>
+<style>
+  body { font-family: monospace; background: #0f1220; color: #f2ede1; padding: 2rem; max-width: 44rem; margin: auto; }
+  button { margin-top: 1rem; padding: 0.6rem 1.2rem; background: #e3b23c; border: none; border-radius: 6px; font-family: monospace; font-weight: bold; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #log { margin-top: 1.25rem; white-space: pre-wrap; font-size: 0.85rem; line-height: 1.5; }
+  .ok { color: #8fd98f; }
+  .miss { color: #e08a8a; }
+  .skip { color: #8a8fa8; }
+</style>
+</head>
+<body>
+  <h1>Backfill posters</h1>
+  <p>Goes through every movie in your Firestore list, and for any that don't already have a TMDb poster/id, searches TMDb by title (and year, if you have one) and patches in the poster, TMDb id, and year if it finds a confident match. Safe to run more than once — anything already matched gets skipped.</p>
+  <button id="go">Find &amp; update posters</button>
+  <div id="log"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="tmdb-config.js"></script>
+  <script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const log = document.getElementById("log");
+    const goBtn = document.getElementById("go");
+
+    function line(text, cls) {
+      const span = document.createElement("div");
+      span.textContent = text;
+      if (cls) span.className = cls;
+      log.appendChild(span);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function searchTmdb(title, year) {
+      const params = new URLSearchParams({ query: title, include_adult: "false" });
+      if (year) params.set("year", year);
+      const res = await fetch(`https://api.themoviedb.org/3/search/movie?${params}`, {
+        headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}` }
+      });
+      if (!res.ok) throw new Error(`TMDb ${res.status}`);
+      const data = await res.json();
+      return data.results && data.results[0] ? data.results[0] : null;
+    }
+
+    function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+    goBtn.addEventListener("click", async () => {
+      goBtn.disabled = true;
+      log.innerHTML = "";
+
+      if (!TMDB_READ_TOKEN || TMDB_READ_TOKEN.startsWith("PASTE_")) {
+        line("tmdb-config.js isn't set up yet — paste your read access token in first.", "miss");
+        goBtn.disabled = false;
+        return;
+      }
+
+      const snapshot = await db.collection("movies").get();
+      const missing = snapshot.docs.filter((d) => !d.data().poster && !d.data().tmdbId);
+
+      line(`${snapshot.size} movies total, ${missing.length} missing a poster. Starting...`);
+
+      for (const doc of missing) {
+        const movie = doc.data();
+        try {
+          const match = await searchTmdb(movie.title, movie.year);
+          if (match) {
+            await db.collection("movies").doc(doc.id).update({
+              poster: match.poster_path || null,
+              tmdbId: match.id,
+              year: movie.year || (match.release_date || "").slice(0, 4) || null
+            });
+            line(`✓ ${movie.title}${match.poster_path ? "" : " (matched, but TMDb has no poster for it)"}`, "ok");
+          } else {
+            line(`✗ ${movie.title} — no TMDb match found, left as-is`, "miss");
+          }
+        } catch (err) {
+          line(`✗ ${movie.title} — error: ${err.message}`, "miss");
+        }
+        await sleep(300); // be gentle with the free API tier
+      }
+
+      line("Done.");
+      goBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>
