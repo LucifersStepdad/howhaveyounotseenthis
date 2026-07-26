@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bulk import — First Watch</title>
+<style>
+  body { font-family: monospace; background: #0f1220; color: #f2ede1; padding: 2rem; max-width: 40rem; margin: auto; }
+  textarea { width: 100%; height: 16rem; background: #171b2e; color: #f2ede1; border: 1px solid #232946; padding: 0.75rem; }
+  button { margin-top: 1rem; padding: 0.6rem 1.2rem; background: #e3b23c; border: none; border-radius: 6px; font-family: monospace; font-weight: bold; cursor: pointer; }
+  #log { margin-top: 1rem; white-space: pre-wrap; font-size: 0.85rem; color: #8a8fa8; }
+</style>
+</head>
+<body>
+  <h1>Bulk import</h1>
+  <p>Your starting list is pre-filled below (edit, add, or remove lines freely). One title per line, optionally "Title | Year". Run this once to load them, then delete this page (or just stop linking to it) — it's not linked from the main site.</p>
+  <textarea id="list">Inglourious Basterds | 2009
+Good Will Hunting | 1997
+American Beauty | 1999
+Se7en | 1995
+Kill Bill: Volume 1 | 2003
+Sinners | 2025
+The Prestige | 2006
+Saving Private Ryan | 1998
+Joker | 2019
+Akira | 1988
+Casino | 1995
+Goodfellas | 1990
+Taxi Driver | 1976
+Raging Bull | 1980
+Scarface | 1983
+Catch Me If You Can | 2002
+Dead Poets Society | 1989
+Eternal Sunshine of the Spotless Mind | 2004
+The Truman Show | 1998
+Signs | 2002
+The Matrix | 1999
+Amélie | 2001
+The Usual Suspects | 1995
+The Godfather | 1972
+The Godfather Part II | 1974
+The Godfather Part III | 1990
+The Pianist | 2002
+The Green Mile | 1999
+Star Wars: Episode IV – A New Hope | 1977
+Star Wars: Episode V – The Empire Strikes Back | 1980
+Star Wars: Episode VI – Return of the Jedi | 1983
+The Terminator | 1984
+Terminator 2: Judgment Day | 1991
+Total Recall | 1990
+Pan's Labyrinth | 2006
+It | 2017
+Shame | 2011
+Drive | 2011
+Halloween | 1978
+An Officer and a Gentleman | 1982
+Parasite | 2019
+Léon: The Professional | 1994
+Cinema Paradiso | 1988
+Life Is Beautiful | 1997
+A Beautiful Mind | 2001
+Three Billboards Outside Ebbing, Missouri | 2017
+Gone with the Wind | 1939
+The Revenant | 2015
+Fargo | 1996
+Stand by Me | 1986
+In the Name of the Father | 1993
+Amistad | 1997
+Amazing Grace | 2006
+The Silence of the Lambs | 1991
+The Imitation Game | 2014
+Oppenheimer | 2023
+Braveheart | 1995
+Alien | 1979
+Argo | 2012
+Brokeback Mountain | 2005
+An Affair to Remember | 1957
+Psycho | 1960
+The Birds | 1963
+Rear Window | 1954
+The Bridges of Madison County | 1995
+Fatal Attraction | 1987
+Misery | 1990
+Fight Club | 1999
+The Big Lebowski | 1998
+Blade Runner | 1982
+There Will Be Blood | 2007
+No Country for Old Men | 2007
+The Thing | 1982
+Mad Max: Fury Road | 2015
+Platoon | 1986
+The Deer Hunter | 1978
+Dunkirk | 2017
+Oldboy | 2003
+City of God | 2002
+A Clockwork Orange | 1971
+Full Metal Jacket | 1987
+Jarhead | 2005
+Zodiac | 2007
+Singin' in the Rain | 1952
+The Piano | 1993
+The Power of the Dog | 2021
+Lost in Translation | 2003
+Lady Bird | 2017
+Barbie | 2023
+The Hurt Locker | 2008
+Mary and Max | 2009</textarea>
+  <br>
+  <button id="go">Import all</button>
+  <div id="log"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const log = document.getElementById("log");
+
+    document.getElementById("go").addEventListener("click", async () => {
+      const lines = document.getElementById("list").value
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      log.textContent = `Importing ${lines.length} titles...\n`;
+
+      for (const line of lines) {
+        const [title, year] = line.split("|").map((s) => s && s.trim());
+        try {
+          await db.collection("movies").add({
+            title,
+            year: year || null,
+            addedBy: "Import",
+            votes: 0,
+            watched: false,
+            review: "",
+            reviewedBy: "",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          log.textContent += `✓ ${title}\n`;
+        } catch (err) {
+          log.textContent += `✗ ${title} — ${err.message}\n`;
+        }
+      }
+      log.textContent += "Done.";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /movies/{movieId} {
+
+      // Anyone can read the list, votes, watched status, and reviews.
+      allow read: if true;
+
+      // Anyone can add a new movie, as long as it looks like a movie
+      // (has a title, starts unwatched, starts with 0 votes).
+      allow create: if request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.title.size() < 200
+                    && request.resource.data.votes == 0
+                    && request.resource.data.watched == false;
+
+      // Anyone can update a movie, but only these fields, and only
+      // votes may go up by exactly 1 at a time — no jumping the count.
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['votes', 'watched', 'watchedAt', 'review', 'reviewedBy'])
+                    && (
+                         request.resource.data.votes == resource.data.votes
+                         || request.resource.data.votes == resource.data.votes + 1
+                       );
+
+      allow delete: if false;
+    }
+  }
+}

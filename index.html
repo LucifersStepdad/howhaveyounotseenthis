@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Watch — the movie night ballot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- MARQUEE HEADER -->
+  <header class="marquee">
+    <div class="marquee__bulbs" aria-hidden="true"></div>
+    <div class="marquee__inner">
+      <p class="marquee__eyebrow">Now Booking · One Night Only</p>
+      <h1 class="marquee__title">FIRST WATCH</h1>
+      <p class="marquee__sub">She's seen almost nothing. We're fixing that, one ballot at a time.</p>
+    </div>
+    <div class="marquee__bulbs" aria-hidden="true"></div>
+  </header>
+
+  <main class="lobby">
+
+    <!-- STATUS BAR -->
+    <section class="status-bar" id="statusBar">
+      <div class="status-pill">
+        <span class="status-num" id="statTotal">–</span>
+        <span class="status-label">on the list</span>
+      </div>
+      <div class="status-pill">
+        <span class="status-num" id="statWatched">–</span>
+        <span class="status-label">watched</span>
+      </div>
+      <div class="status-pill">
+        <span class="status-num" id="statVotes">–</span>
+        <span class="status-label">votes cast</span>
+      </div>
+    </section>
+
+    <!-- ADD MOVIE -->
+    <section class="add-panel">
+      <h2 class="section-title">Add to the reel</h2>
+      <form id="addForm" class="add-form">
+        <div class="autocomplete" id="titleAutocomplete">
+          <input type="text" id="addTitle" placeholder="Start typing a title..." required maxlength="120" autocomplete="off">
+          <div class="autocomplete__results" id="titleResults" hidden></div>
+        </div>
+        <input type="text" id="addYear" placeholder="Year" maxlength="8">
+        <input type="text" id="addBy" placeholder="Your name (optional)" maxlength="40">
+        <input type="hidden" id="addTmdbId">
+        <input type="hidden" id="addPoster">
+        <button type="submit" class="btn btn--gold">Print ticket</button>
+      </form>
+      <p class="add-hint" id="addHint"></p>
+    </section>
+
+    <!-- TABS -->
+    <nav class="tabs" role="tablist">
+      <button class="tab is-active" data-filter="upcoming" role="tab" aria-selected="true">To watch</button>
+      <button class="tab" data-filter="watched" role="tab" aria-selected="false">Watched &amp; reviewed</button>
+      <button class="tab" data-filter="all" role="tab" aria-selected="false">Everything</button>
+    </nav>
+
+    <!-- SORT -->
+    <div class="toolbar">
+      <label for="sortSelect" class="toolbar__label">Sort by</label>
+      <select id="sortSelect" class="toolbar__select">
+        <option value="votes">Most votes</option>
+        <option value="newest">Newest added</option>
+        <option value="alpha">A–Z</option>
+      </select>
+    </div>
+
+    <!-- MOVIE GRID -->
+    <section id="grid" class="grid" aria-live="polite">
+      <p class="grid__loading" id="loadingMsg">Rolling the film... connecting to the projector booth.</p>
+    </section>
+
+    <p class="empty-state" id="emptyState" hidden>Nothing here yet. Be the first to print a ticket above.</p>
+
+  </main>
+
+  <footer class="footer">
+    <p>Built for movie nights. Every vote and review is visible to anyone with this link.</p>
+  </footer>
+
+  <!-- Firebase (compat build, no bundler needed) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="tmdb-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
