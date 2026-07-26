@@ -7,6 +7,7 @@ const moviesRef = db.collection("movies");
 let allMovies = [];
 let currentFilter = "upcoming";
 let currentSort = "votes";
+let currentSearch = "";
 let editingReviewId = null;
 const VOTED_KEY = "firstwatch_voted_ids";
 
@@ -35,6 +36,7 @@ const statTotal = document.getElementById("statTotal");
 const statWatched = document.getElementById("statWatched");
 const statVotes = document.getElementById("statVotes");
 const sortSelect = document.getElementById("sortSelect");
+const findInput = document.getElementById("findInput");
 
 const addTitle = document.getElementById("addTitle");
 const addYear = document.getElementById("addYear");
@@ -238,6 +240,12 @@ sortSelect.addEventListener("change", () => {
   render();
 });
 
+/* ---------- Find a film ---------- */
+findInput.addEventListener("input", () => {
+  currentSearch = findInput.value.trim().toLowerCase();
+  render();
+});
+
 /* ---------- Voting ---------- */
 async function vote(id) {
   const voted = getVotedIds();
@@ -295,8 +303,12 @@ async function saveReview(id, review, reviewedBy) {
 function render() {
   let list = [...allMovies];
 
-  if (currentFilter === "upcoming") list = list.filter((m) => !m.watched);
-  if (currentFilter === "watched") list = list.filter((m) => m.watched);
+  if (currentSearch) {
+    list = list.filter((m) => m.title.toLowerCase().includes(currentSearch));
+  } else {
+    if (currentFilter === "upcoming") list = list.filter((m) => !m.watched);
+    if (currentFilter === "watched") list = list.filter((m) => m.watched);
+  }
 
   if (currentSort === "votes") list.sort((a, b) => (b.votes || 0) - (a.votes || 0));
   if (currentSort === "alpha") list.sort((a, b) => a.title.localeCompare(b.title));
@@ -308,6 +320,9 @@ function render() {
 
   grid.innerHTML = "";
   emptyState.hidden = list.length !== 0;
+  emptyState.textContent = currentSearch
+    ? `Nothing matching "${findInput.value.trim()}".`
+    : "Nothing here yet. Be the first to print a ticket above.";
 
   const votedIds = getVotedIds();
 
