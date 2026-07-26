@@ -358,7 +358,7 @@ function render() {
           <button class="btn ${movie.watched ? "btn--ghost" : "btn--red"}" data-watch-toggle="${movie.id}" data-next="${!movie.watched}">
             ${movie.watched ? "Mark unwatched" : "We watched this"}
           </button>
-          <button class="btn btn--ghost" data-delete="${movie.id}" data-title="${escapeHtml(movie.title)}">Remove</button>
+          ${movie.watched ? "" : `<button class="btn btn--ghost" data-delete="${movie.id}" data-title="${escapeHtml(movie.title)}">Remove</button>`}
         </div>
         ${movie.watched ? renderReviewSection(movie) : ""}
       </div>
